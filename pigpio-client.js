@@ -18,6 +18,7 @@ I2CO, I2CC, I2CRD, I2CWD,
 I2CWQ, I2CRS, I2CWS, I2CRB, I2CWB, I2CRW, I2CWW, I2CRK, I2CWK, I2CRI, I2CWI, I2CPC, I2CPK,
   
 BSCX, EVM, 
+I2CO, I2CC, I2CRD, I2CWD, BSCX, EVM, 
 PROC, PROCD, PROCR, PROCS, PROCP, PROCU
 } = SIF.Commands
 
@@ -1108,6 +1109,46 @@ exports.pigpio = function (pi) {
     return request(FG, gpio, steady, 0, callback)
   }
 
+  // scripts
+  //PROC, PROCD, PROCR, PROCS, PROCP, PROCU
+  // store a text script to pigpiod, returns a scriptID
+  that.storeScript = function(text, cb) {
+    let chars = text.split('');
+    var arrBuf = new ArrayBuffer(chars.length);
+    var buffer = new Uint8Array(arrBuf);
+    for (let i = 0; i < chars.length; i++) {
+      buffer[i] = chars[i].charCodeAt(0) & 0xff;
+    }
+    return request(PROC, 0, 0, arrBuf.byteLength, cb, arrBuf)
+  }
+  that.deleteScript = function (sid, cb) {
+    return request(PROCD, sid, 0, 0, cb)
+  }
+  that.statusScript = function (sid, cb) {
+    return request(PROCP, sid, 0, 0, cb)
+  }
+  that.runScript = function (sid, params, cb) {
+    params = params || [];
+    var arrBuf = new ArrayBuffer(params.length*4);
+    var buffer = new Uint32Array(arrBuf);
+    for (let i = 0; i < params.length; i++) {
+      buffer[i] = params[i]>>0;
+    }
+    return request(PROCR, sid, 0, arrBuf.byteLength, cb, arrBuf)
+  }
+  that.stopScript = function (sid, cb) {
+    return request(PROCS, sid, 0, 0, cb)
+  }
+  // update script params - probably for a running script?
+  that.updateScript = function (sid, params, cb) {
+    params = params || [];
+    var arrBuf = new ArrayBuffer(params.length*4);
+    var buffer = new Uint32Array(arrBuf);
+    for (let i = 0; i < params.length; i++) {
+      buffer[i] = params[i]>>0;
+    }
+    return request(PROCU, sid, 0, arrBuf.byteLength, cb, arrBuf)
+  }
 
 
   that.gpio = function (gpio) {
